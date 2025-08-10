@@ -1,0 +1,53 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Deephaven.Dhe_NetClient</RootNamespace>
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
+    <PackageId>Deephaven.CorePlus.Client</PackageId>
+    <Title>Client Library for Deephaven Enterprise</Title>
+    <Authors>Deephaven Authors</Authors>
+    <Company>Deephaven Data Labs LLC</Company>
+    <Description>A .NET library for accessing data from Deephaven Enterprise servers.</Description>
+    <Copyright>Copyright (c) 2016-2025 Deephaven Data Labs and Patent Pending</Copyright>
+    <PackageProjectUrl>https://deephaven.io/</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/deephaven/deephaven-enterprise-client</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <AssemblyName>Deephaven.CorePlus.Client</AssemblyName>
+    <PackageReadmeFile>README-nuget.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <NoWarn>1701;1702;1591;612</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <NoWarn>1701;1702;1591;612</NoWarn>
+  </PropertyGroup>
+
+
+  <ItemGroup>
+    <Protobuf Include="..\..\..\proto\deephaven_enterprise\proto\*.proto" ProtoRoot="..\..\..\proto" GrpcServices="Client" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Deephaven.Core.Client" Version="0.40.0-pre1" />
+    <PackageReference Include="Google.Protobuf" Version="3.31.1" />
+    <PackageReference Include="Grpc.Net.Client" Version="2.71.0" />
+    <PackageReference Include="Grpc.Tools" Version="2.72.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="README-nuget.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,202 @@
+/*
+ * Copyright (c) 2016-2022 Deephaven Data Labs and Patent Pending
+ */
+
+syntax = "proto3";
+
+package io.deephaven.proto.controller;
+
+import "deephaven_enterprise/proto/common.proto";
+import "deephaven_enterprise/proto/controller_common.proto";
+import "deephaven_enterprise/proto/table_definition.proto";
+
+option java_multiple_files = true;
+option optimize_for = SPEED;
+
+// Deephaven data types
+enum RestartUsersEnum {
+  RU_UNSPECIFIED = 0;
+  RU_ADMIN = 1;
+  RU_ADMIN_AND_VIEWERS = 2;
+  RU_RESERVED_1 = 3;
+  RU_VIEWERS_WHEN_DOWN = 4;
+}
+
+enum PersistentQueryStatusEnum {
+  PQS_UNSPECIFIED = 0;
+  PQS_UNINITIALIZED = 1;
+  PQS_CONNECTING = 2;
+  PQS_AUTHENTICATING = 3;
+  PQS_ACQUIRING_WORKER = 4;
+  PQS_INITIALIZING = 5;
+  PQS_RUNNING = 6;
+  PQS_FAILED = 7;
+  PQS_ERROR = 8;
+  PQS_DISCONNECTED = 9;
+  PQS_STOPPING = 10;
+  PQS_STOPPED = 11;
+  PQS_COMPLETED = 12;
+  PQS_EXECUTING = 13;
+}
+
+enum ExportedObjectTypeEnum {
+  EOT_UNSPECIFIED = 0;
+  EOT_TABLE = 1;
+  EOT_TREE_TABLE = 2;
+  EOT_TABLE_MAP = 3;
+  EOT_FIGURE = 4;
+  EOT_OTHER_WIDGET = 5;
+  EOT_PARAMETERIZED_QUERY = 6;
+  EOT_PANDAS = 7;
+  EOT_NON_DISPLAYABLE = 8;
+}
+
+message PersistentQueryConfigMessage {
+  // The serial number is a unique identifier for this persistent query.  From the perspective of the controller,
+  // the serial number is what determines which query is which.
+  int64 serial = 1;
+  // The modification version of this persistent query, which increases by one each time the configuration is modified.
+  int64 version = 2;
+
+  // The name of this persistent query.  Currently, the name must be unique to make diagnosing problems easier.
+  string name = 3;
+  // The owner of the query.  The query runs in the user context of the owner.
+  string owner = 4;
+  // Is this query enabled?  Enabled queries can be executed, disable queries cannot.
+  bool enabled = 5;
+  // How much heap should be allocated to this query?
+  double heapSizeGb = 6;
+  
+  double bufferPoolToHeapRatio = 7;
+  bool detailedGCLoggingEnabled = 8;
+
+  // Extra JVM arguments for this query.
+  repeated string extraJvmArguments = 9;
+  // Extra environment variables for this query.
+  repeated string extraEnvironmentVariables = 10;
+  // Extra paths to include in the queries class path.  The class paths are included at the beginning of the worker's
+  // classpath, thus overriding the default classes and resources.
+  repeated string classPathAdditions = 11;
+  // The server to execute on.  The server name is not a hostname, but rather a string used by the Controller to map to
+  // an underlying query dispatcher.  For example, "Query_1" could map to the first query server or "Auto_Merge" could
+  // map to a server selection provider for merge servers.
+  string serverName = 12;
+
+  // Groups that may administer the query.  Administrators may change the query configuration, stop and start it, and
+  // view tables without ACL application.
+  repeated string adminGroups = 13;
+  // Groups that may view the query.
+  repeated string viewerGroups = 14;
+  // Controls the behavior of who can restart the query (admins, viewers, or viewers when down).
+  RestartUsersEnum restartUsers = 15;
+
+  oneof scriptData {
+    // The text of the query's startup script.
+    string scriptCode = 16;
+    // A path to the query's startup script in the controller's Git repository.
+    string scriptPath = 17;
+  }
+
+  // The query's script language.  Groovy or Python are supported.
+  string scriptLanguage = 18;
+  // What kind of query is this.  Typical values are "Script" or "RunAndDone".
+  string configurationType = 19;
+
+  // JSON representing the fields for this configuration type.  The content of this field is dependent on configurationType.
+  optional string typeSpecificFieldsJson = 20;
+
+  // An array of Strings that define when the query starts and stops.
+  repeated string scheduling = 21;
+
+  // How many nanoseconds to allow the query to initialize (or execute for batch queries).
+  int64 timeoutNanos = 22;
+
+  // The jvm profile used by the query.
+  string jvmProfile = 23;
+
+  // The authenticated user that last modified the configuration.
+  string lastModifiedByAuthenticated = 24;
+  // The effective user that last modified the configuration.
+  string lastModifiedByEffective = 25;
+  // The last time the query was modified, in nanoseconds since the epoch.
+  int64 lastModifiedTimeNanos = 26;
+
+  // The status of a temporary query that has entered a terminal state.
+  string completedStatus = 27;
+  // When this temporary query should be removed, in nanoseconds since the epoch.
+  int64 expirationTimeNanos = 28;
+
+  // A JSON string that
+  string kubernetesControl = 29;
+
+  // What kind of worker is this.  DeephavenEnterprise for Legacy workers.  DeephavenCommunity for Core+ workers.
+  string workerKind = 30;
+
+  // The query creation time, in nanoseconds since the epoch.
+  int64 createdTimeNanos = 31;
+}
+
+message ExportedObjectInfoMessage {
+  string name = 1;
+  ExportedObjectTypeEnum type = 2;
+  io.deephaven.proto.common.TableDefinitionMessage tableDefinition = 3;
+  string originalType = 4;
+}
+
+message WorkerProtocolMessage {
+  string name = 1;
+  int32 port = 2;
+}
+
+message ProcessorConnectionDetailsMessage {
+  repeated WorkerProtocolMessage protocols = 1;
+  string workerName = 2;
+  string processInfoId = 3;
+  string processorHost = 4;
+  string envoyPrefix = 5;
+  string grpcUrl = 6;
+  string staticUrl = 7;
+  string enterpriseWebSocketUrl = 8;
+}
+
+message PersistentQueryStateMessage {
+  int64 serial = 1;
+  int64 version = 2;
+
+  PersistentQueryStatusEnum status = 3;
+  int64 initializationStartNanos = 4;
+  int64 initializationCompleteNanos = 5;
+  int64 lastUpdateNanos = 6;
+
+  string dispatcherHost = 7;
+
+  repeated NamedStringList tableGroups = 8;
+  repeated ExportedObjectInfoMessage scopeTypes = 9;
+
+  optional ProcessorConnectionDetailsMessage connectionDetails = 10;
+  optional io.deephaven.proto.common.ExceptionDetailsMessage exceptionDetails = 11;
+
+  // Encoded JSON
+  string typeSpecificStateJson = 12;
+
+  string lastAuthenticatedUser = 13;
+  string lastEffectiveUser = 14;
+
+  // Encoded JSON
+  optional string scriptLoaderStateJson = 15;
+
+  bool hasProgress = 16;
+  int32 progressValue = 17;
+  string progressMessage = 18;
+  string engineVersion = 19;
+  int32 dispatcherPort = 20;
+  int64 shouldStopNanos = 21;
+}
+
+message PersistentQueryInfoMessage {
+  PersistentQueryConfigMessage config = 1;
+  PersistentQueryStateMessage state = 2;
+
+  int32 numFailures = 3;
+  int64 lastFailureNanos = 4;
+}

@@ -1,0 +1,267 @@
+/*
+ * Copyright (c) 2016-2022 Deephaven Data Labs and Patent Pending
+ */
+
+syntax = "proto3";
+
+package io.deephaven.proto.auth;
+
+option java_multiple_files = true;
+option optimize_for = SPEED;
+
+message UserContext {
+  string authenticatedUser = 1;
+  string effectiveUser = 2;
+}
+
+// A unique client identifier sent by clients to introduce themselves to servers.
+message ClientId {
+  string name = 1;
+  // A client uuid in bytes is created by client library code and used for the lifetime of that client process.
+  // A client's uuid is expected by the server to be unique across all live client channels.
+  // If the same client process during its lifetime connects to different server processes,
+  // be it on different machines or different server process instances
+  // on the same machine (eg, server bounce), the client process is expected to use the same uuid to all servers.
+  bytes uuid = 2;
+}
+
+// Servers respond to Authenticate* requests with an opaque cookie for the (client_id, user, effectiveUser) combination
+// granted in the request.  clients remember and use the same cookie in subsequent RPCs to the server that intend to use
+// those credentials. This cookie should be refreshed prior to the deadline, which is represented as milliseconds since
+// epoch.  Clients are encouraged to refresh considerably in advance of the deadline, as to be able to continue
+// operating under network delays.  The expected pattern is for clients to refresh half-way throught their
+// available period from the last refresh to the deadline.
+message AuthenticationResult {
+    bool authenticated = 1;  // true if authentication was successful.
+    bytes cookie = 2;  // the cookie that the client should remember and refresh before its deadline to remain authenticated.
+    sfixed64 cookie_deadline_time_millis = 3;  // the absolute time in milliseconds from the epoch when the cookie will expire.
+    UserContext userContext = 4;  // the user context actually authenticated; if there was one in the request should match it.
+}
+
+// A token is a server-generated identifier for a client that allows the client to present themselves to other
+// services using the token as a means of verifying identity and credentials; the other service can validate
+// a token provided by a client with an authentication server to confirm the claimed identity and credentials.
+message Token {
+    fixed64 token_id = 1;  // The actual token payload.
+    string service = 2;  // The service for which the token is intended.
+    UserContext user_context = 3;  // The credentials for the token.
+    bytes ip_address = 4;  // The ip address of the authentication server that produced the token.
+}
+
+// Request argument for authenticateByDelegateToken rpc.
+// See the service definition file for details on the rpc request.
+message AuthenticateByDelegateTokenRequest {
+    ClientId client_id = 1;
+    Token delegate_token = 2;
+}
+
+// Request response for authenticateByDelegateToken rpc.
+// See the service definition file for details on the rpc request.
+message AuthenticateByDelegateTokenResponse {
+    AuthenticationResult result = 1;
+}
+
+// Request argument for refreshCookie rpc.
+// See the service definition file for details on the rpc request.
+message RefreshCookieRequest {
+    // The actual cookie that was handed to the client by the server, that the client is trying to refresh.
+    bytes cookie = 1;  
+}
+
+// Request response for refreshCookie rpc.
+// See the service definition file for details on the rpc request.
+//
+// If the RefreshCookieResponse includes a new cookie, then the cookie
+// has cycled and the previous cookie will timeout.
+message RefreshCookieResponse {
+    // The cookie; clients should note if it has changed from the one they handed to the request.
+    bytes cookie = 1;
+    // Absolute time expressed as milliseconds from the epoch when cookie expires.
+    sfixed64 cookie_deadline_time_millis = 2;
+}
+
+// Request argument for invalidateCookie rpc.
+// See the service definition file for details on the rpc request.
+message InvalidateCookieRequest {
+    bytes cookie = 1;  // the cookie value to invalidate.
+}
+
+// Request response for invalidateCookie rpc.
+// See the service definition file for details on the rpc request.
+message InvalidateCookieResponse {
+}
+
+// Request argument for authenticateByPassword prc.
+// See the service definition file for details on the rpc request.
+message AuthenticateByPasswordRequest {
+    ClientId client_id = 1;  // the client id for the client making the request.
+    UserContext user_context = 2;  // the credentials desired.
+    string password = 3;  // the password.
+}
+
+// Request response for authenticateByPassword rpc.
+// See the service definition file for details on the rpc request.
+message AuthenticateByPasswordResponse {
+    AuthenticationResult result = 1;
+}
+
+// Request argument for authenticateByPublicKey rpc.
+// See the service definition file for details on the rpc request.
+message AuthenticateByPublicKeyRequest {
+    ClientId client_id = 1;  // the client id for the client making the request.
+    UserContext user_context = 2;  // the credentials desired.
+    bytes public_key = 3;  // the public key.
+    // The nonce challenge response, which should have been obtained from processing
+    // the result of an earlier getNonce rpc request by the client.
+    bytes challenge_response = 4;
+    bytes ip_address = 5; // the ip address of the server that provided the nonce
+}
+
+// Request response for authenticateByPublicKey rpc.
+// See the service definition file for details on the rpc request.
+message AuthenticateByPublicKeyResponse {
+    AuthenticationResult result = 1;
+}
+
+// Request argument for authenticateByExternal rpc.
+// See the service definition file for details on the rpc request.
+message AuthenticateByExternalRequest {
+    ClientId client_id = 1;  // the client id for the client making the request.
+    string key = 2;  // the key for external authentication.
+}
+
+// Request response for authenticateByExternal rpc.
+// See the service definition file for details on the rpc request.
+message AuthenticateByExternalResponse {
+    AuthenticationResult result = 1;
+}
+
+// Request argument for authenticateByCookieRequest rpc.
+// See the service definition file for details on the rpc request.
+message AuthenticateByCookieRequest {
+    ClientId client_id = 1;  // the new client id for the client making the request.
+    UserContext user_context = 2;  // the credentials desired, which should match the cookie.
+    bytes cookie = 3;  // a valid cookie for another client on the same user context.
+}
+
+// Request response for replaceClient rpc.
+// See the service definition file for details on the rpc request.
+message AuthenticateByCookieResponse {
+    AuthenticationResult result = 1;
+}
+
+// Request argument for getNonce rpc.
+// See the service definition file for details on the rpc request.
+message GetNonceRequest {
+    ClientId client_id = 1;  // the client id for the client making the request.
+}
+
+// Request response for getNonce rpc.
+// See the service definition file for details on the rpc request.
+message GetNonceResponse {
+    bytes nonce = 1;  // the nonce payload
+    bytes ip_address =2;  // the ip address of the server host that produced the nonce
+}
+
+// Request argument for getToken rpc.
+// See the service definition file for details on the rpc request.
+message GetTokenRequest {
+    bytes cookie = 1;  // the cookie for the client making the request.
+    string service = 2;  // the service for which the token is intended.
+}
+
+// Request response for getToken rpc.
+// See the service definition file for details on the rpc request.
+message GetTokenResponse {
+    Token token = 1;  // the token payload
+}
+
+// Request argument for getTokenAs rpc
+// See the service definition file for details on the rpc request.
+message GetTokenAsRequest {
+    bytes cookie = 1;  // the cookie for the client making the request.
+    string service = 2;  // the service for which the token is intended.
+    string operateAsUser = 3;  // the user as whom the client desires to operate.
+}
+
+// Request response for getTokenAs rpc
+// See the service definition file for details on the rpc request.
+message GetTokenAsResponse {
+    Token token = 1;  // the token payload
+}
+
+// Request argument for verifyToken rpc
+// See the service definition file for details on the rpc request.
+message VerifyTokenRequest {
+    string service = 1;  // the service who received the token and wishes to verify.
+    Token token = 2;  // the token payload for verification.
+}
+
+// Request response for verifyToken rpc
+// See the service definition file for details on the rpc request.
+message VerifyTokenResponse {
+    bool token_valid = 1;  // whether the token is valid or not.
+}
+
+// Request argument for reload rpc.
+// See the service definition file for details on the rpc request.
+message ReloadRequest {
+}
+
+// Request response for reload rpc.
+// See the service definition file for details on the rpc request.
+message ReloadResponse {
+    string result = 1;  // A string that a tool asking for configuration reload can show.
+}
+
+// This message is not used in requests/responses, but to serialize/deserialize the
+// information associated with a uuid client (KV key) with its payload (KV value) in etcd.
+message KvClientData {
+    bytes hashedCookie = 1;
+    UserContext userContext = 2;
+}
+
+// Map directly to classes derived from AuthException.
+// If you modify this enum, ensure to keep consistent the mappings to/from it
+// in GrpcAuthenticationService.java and GrpcAuthenticationClientManager.java.
+enum CallStatus {
+     OK = 0;                        // No error, everything is fine.
+     AUTH_ERROR_NON_RETRYABLE = 1;  // AuthException, non-retryable.
+     AUTH_ERROR_RETRYABLE = 2;      // AuthException, retryable.
+     ALREADY_AUTHENTICATED = 3;     // AlreadyAuthenticatedException
+     NOT_AUTHENTICATED = 4;         // NotAuthenticatedException
+     PUB_PRIV_KEY = 5;              // PubPrivKeyException
+     TOKEN_CREATION = 6;            // TokenCreationException
+     TOKEN_VERIFICATION = 7;        // TokenVerificationException
+     UNAVAILABLE = 8;               // UnavailableException
+}
+
+// Enough information to propagate the basics of an AuthException
+// from the server to the client by sending this message in
+// Metadata.
+message AuthError {
+    CallStatus callStatus = 1;
+    string message = 2;
+}
+
+// Request argument for verifyNonce request.
+// See the service definition file for details on the rpc request.
+message VerifyChallengeRequest {
+    bytes server_ip_address = 1;  // the ip address of the server making the request on behalf of a client
+    ClientId client_id = 2;  // the client id for the client making the originating request
+    UserContext user_context = 3;  // the credentials desired.
+    bytes public_key = 4;  // the public key.
+    // The nonce challenge response, which should have been obtained from processing
+    // the result of an earlier getNonce rpc request by the client
+    // on the server receiving this request ("this" server)
+    bytes challenge_response = 5;
+}
+
+// Request response for verifyNonce request.
+// See the service definition file for details on the rpc request.
+message VerifyChallengeResponse {
+    bool success = 1;
+    // The user context that can be actually authenticated;
+    // if there was one in the original client request this should match it.
+    UserContext userContext = 2;
+}

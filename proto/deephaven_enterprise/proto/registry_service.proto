@@ -1,0 +1,22 @@
+/*
+ * Copyright (c) 2016-2019 Deephaven Data Labs and Patent Pending
+ */
+
+syntax = "proto3";
+
+package io.deephaven.proto.registry.grpc;
+
+import "deephaven_enterprise/proto/common.proto";
+import "deephaven_enterprise/proto/registry.proto";
+import "google/protobuf/wrappers.proto";
+
+option java_multiple_files = true;
+option optimize_for = SPEED;
+
+/*
+ * Remoting for the ServiceRegistry interface.
+ */
+service RegistryApi {
+  rpc about(io.deephaven.proto.common.AboutRequest) returns (io.deephaven.proto.common.AboutReply) {}
+  rpc updateWorkers(io.deephaven.proto.registry.UpdateWorkersRequest) returns (io.deephaven.proto.registry.UpdateWorkersResponse) {}
+}

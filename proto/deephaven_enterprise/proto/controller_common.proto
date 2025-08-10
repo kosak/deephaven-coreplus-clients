@@ -1,0 +1,28 @@
+/*
+ * Copyright (c) 2016-2022 Deephaven Data Labs and Patent Pending
+ */
+
+syntax = "proto3";
+
+package io.deephaven.proto.controller;
+
+option java_multiple_files = true;
+option optimize_for = SPEED;
+
+message ErrorResponse {
+  string message = 1;
+}
+
+
+message PingRequest {
+  optional bytes cookie = 1;
+}
+
+message PingResponse {
+
+}
+
+message NamedStringList {
+  string name = 1;
+  repeated string values = 2;
+}

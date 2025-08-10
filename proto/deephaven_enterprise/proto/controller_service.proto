@@ -1,0 +1,54 @@
+/*
+ * Copyright (c) 2016-2022 Deephaven Data Labs and Patent Pending
+ */
+
+syntax = "proto3";
+
+package io.deephaven.proto.controller.grpc;
+
+import "deephaven_enterprise/proto/controller_common.proto";
+import "deephaven_enterprise/proto/controller.proto";
+import "deephaven_enterprise/proto/acl.proto";
+import "deephaven_enterprise/proto/auth.proto";
+
+option java_multiple_files = true;
+option optimize_for = SPEED;
+
+service ControllerApi {
+    // Authentication
+    rpc authenticate(AuthenticationRequest) returns (AuthenticationResponse) {}
+
+    // These are for query management
+    rpc addQuery(AddQueryRequest) returns (AddQueryResponse) {}
+    rpc removeQuery(RemoveQueryRequest) returns (RemoveQueryResponse) {}
+    rpc modifyQuery(ModifyQueryRequest) returns (ModifyQueryResponse) {}
+    rpc restartQuery(RestartQueryRequest) returns (RestartQueryResponse) {}
+    rpc stopQuery(StopQueryRequest) returns (StopQueryResponse) {}
+
+    rpc determineDispatcher(DetermineDispatcherRequest) returns (DetermineDispatcherResponse) {}
+    rpc getConfiguration(GetConfigurationRequest) returns (GetConfigurationResponse) {}
+
+    // Script commands
+    rpc getScriptPaths(GetScriptPathsRequest) returns (GetScriptPathsResponse) {}
+    rpc getScript(GetScriptRequest) returns (GetScriptResponse) {}
+
+    // Configuration commands
+    rpc statusUpdate(StatusUpdateRequest) returns (StatusUpdateResponse) {}
+    rpc reloadConfig(ReloadConfigRequest) returns (ReloadConfigResponse) {}
+
+    // Heartbeating
+    rpc ping(PingRequest) returns (PingResponse) {}
+    rpc subscribe(SubscribeRequest) returns (stream SubscribeResponse) {}
+    rpc invalidateCookie(io.deephaven.proto.auth.InvalidateCookieRequest) returns (io.deephaven.proto.auth.InvalidateCookieResponse) {}
+}
+
+service AclApi {
+    rpc isSuperUser(UnaryUserRequest) returns (BooleanResponse) {}
+    rpc isAclEditor(UnaryUserRequest) returns (BooleanResponse) {}
+    rpc isQueryManager(UnaryUserRequest) returns (BooleanResponse) {}
+    rpc isSchemaManager(UnaryUserRequest) returns (BooleanResponse) {}
+    rpc getUsersForGroup(UnaryGroupRequest) returns (UserOrGroupList) {}
+    rpc getGroupsForUser(UnaryUserRequest) returns (UserOrGroupList) {}
+    rpc getAllUsers(GetAllUsersRequest) returns (UserOrGroupList) {}
+    rpc getAllGroups(GetAllGroupsRequest) returns (UserOrGroupList) {}
+}

@@ -1,0 +1,64 @@
+/*
+ * Copyright (c) 2016-2022 Deephaven Data Labs and Patent Pending
+ */
+
+syntax = "proto3";
+
+package io.deephaven.proto.auth.grpc;
+
+import "deephaven_enterprise/proto/common.proto";
+import "deephaven_enterprise/proto/auth.proto";
+
+option java_multiple_files = true;
+option optimize_for = SPEED;
+
+service AuthApi {
+    // Simple ping method that allows a client to sample the latency to the server.
+    rpc ping(io.deephaven.proto.common.PingRequest) returns (io.deephaven.proto.common.PingResponse) {}
+
+    //
+    // Authenticate methods validate credentials and register authentication state (unless asked to verify only)
+    //
+
+    // Authenticate by password.
+    rpc authenticateByPassword(AuthenticateByPasswordRequest) returns (AuthenticateByPasswordResponse) {}
+
+    // Authenticate by public key challenge; should have obtained a nonce earlier via getNonce rpc.
+    rpc authenticateByPublicKey(AuthenticateByPublicKeyRequest) returns (AuthenticateByPublicKeyResponse) {}
+
+    // Authenticate by delegate token; should have obtained a token earlier from another service that
+    // created it and forwarded it.
+    rpc authenticateByDelegateToken(AuthenticateByDelegateTokenRequest) returns (AuthenticateByDelegateTokenResponse) {}
+
+    // Authenticate by an external method (eg, active directory).
+    rpc authenticateByExternal(AuthenticateByExternalRequest) returns (AuthenticateByExternalResponse) {}
+
+    // Authenticate by providing an already existing cookie and the user context that cookie should be associated with.
+    rpc authenticateByCookie(AuthenticateByCookieRequest) returns (AuthenticateByCookieResponse) {}
+
+    // Refresh a cookie to maintain credentials.  Clients are expected to try to refresh cookies
+    // with enough time in advance before expiration; a reasonable default is half way through from the time
+    // the cookie was obtained with its deadline, and the actual deadline time.
+    rpc refreshCookie(RefreshCookieRequest) returns (RefreshCookieResponse) {}
+
+    // Clients that are about to terminate are expected to invalidate their credentials before going away.
+    rpc invalidateCookie(InvalidateCookieRequest) returns (InvalidateCookieResponse) {}
+
+    // Get a nonce for public key authentication.
+    rpc getNonce(GetNonceRequest) returns (GetNonceResponse) {}
+
+    // Get a token for a three-way handshake.
+    rpc getToken(GetTokenRequest) returns (GetTokenResponse) {}
+
+    // Get a token for a three-way handshake as a particular user.
+    rpc getTokenAs(GetTokenAsRequest) returns (GetTokenAsResponse) {}
+
+    // Verify a token provided by another service.
+    rpc verifyToken(VerifyTokenRequest) returns (VerifyTokenResponse) {}
+
+    // Request this server to reload its configuration.
+    rpc reload(ReloadRequest) returns (ReloadResponse) {}
+
+    // Verify a nonce challenge response for another server (not used directly by clients, only server-server)
+    rpc verifyChallenge(VerifyChallengeRequest) returns (VerifyChallengeResponse) {}
+}

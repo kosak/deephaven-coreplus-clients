@@ -1,0 +1,55 @@
+/*
+ * Copyright (c) 2016-2019 Deephaven Data Labs and Patent Pending
+ */
+
+syntax = "proto3";
+
+package io.deephaven.proto.common;
+
+option java_multiple_files = true;
+option optimize_for = SPEED;
+
+enum StorageTypeEnum {
+  ST_UNSPECIFIED = 0;
+  ST_IN_MEMORY = 1;
+  ST_NESTED_PARTITIONED_ON_DISK = 2;
+  ST_SPLAYED_ON_DISK = 4;
+  ST_EXTENDED = 8;
+}
+
+enum ColumnTypeEnum {
+  CT_UNSPECIFIED = 0;
+  CT_NORMAL = 1;
+  CT_GROUPING = 2;
+  CT_PARTITIONING = 4;
+  CT_VIRTUAL = 8;
+}
+
+enum EncodingTypeEnum {
+  ET_UNSPECIFIED = 0;
+  ET_ISO_8859_1 = 1;
+  ET_UTF_8 = 2;
+  ET_US_ASCII = 4;
+  ET_UTF_16 = 8;
+  ET_UTF_16BE = 16;
+  ET_UTF_16LE = 32;
+}
+
+message ColumnDefinitionMessage {
+  string name = 1;
+  string dataType = 2;
+  optional string componentType = 3;
+  optional ColumnTypeEnum columnType = 4;
+  bool isVarSizeString = 5;
+  optional EncodingTypeEnum encoding = 6;
+  optional string codec = 7;
+  optional string codecArgs = 8;
+  optional int32 objectWidthBytes = 9;
+}
+
+message TableDefinitionMessage {
+  optional string namespace = 1;
+  optional string tableName = 2;
+  repeated ColumnDefinitionMessage columns = 3;
+  optional StorageTypeEnum storageType = 4;
+}

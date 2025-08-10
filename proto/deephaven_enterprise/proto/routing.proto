@@ -1,0 +1,293 @@
+/*
+ * Copyright (c) 2016-2019 Deephaven Data Labs and Patent Pending
+ */
+
+syntax = "proto3";
+
+package io.deephaven.proto.routing;
+
+import "deephaven_enterprise/proto/common.proto";
+import "google/protobuf/wrappers.proto";
+
+option java_multiple_files = true;
+option optimize_for = SPEED;
+
+/*
+ * Support messages for routing_service implementation of DataRoutingService
+ */
+// ========== Endpoint Configs =================================================
+/* general endpoint configuration */
+message EndpointConfigMessage {
+  string name = 1;
+  string serviceRegistryType = 2;
+  map<string, string> properties = 3;
+}
+
+/* endpoint configuration with additional DIS fields */
+message DataImportServiceEndpointConfigMessage {
+  EndpointConfigMessage endpointConfig = 1;
+  int32 throttleKBps = 2;
+}
+
+/* endpoint configuration with additional LAS fields */
+message LogAggregatorEndpointConfigMessage {
+  EndpointConfigMessage endpointConfig = 1;
+}
+// ========== DIS Configs ======================================================
+/* Request for DataImportServiceConfigs */
+message DataImportServiceConfigsRequest {
+  // The request will be for one, by name or for all - excluding core dises or not
+  oneof filter {
+    string name = 1;
+    bool excludeCore = 2;
+  }
+}
+/* Response to request for DataImportServiceConfigs */
+message DataImportServiceConfigsResponse {
+  repeated DataImportServiceConfigMessage configMessage = 1;
+}
+/* Message conveying a DataImportServiceConfig */
+message DataImportServiceConfigMessage {
+  string name = 1;
+  // int32 port = 2; // obsolete
+  // int32 tailerPort = 3; // obsolete
+  string intradayDirectoryName = 4;
+  FilterMessage filter = 5;
+  google.protobuf.StringValue storageRoot = 6;
+  string definitionStorageRoot = 7;
+  WebserverParametersMessage webserverParameters = 8;
+  map<string, string> properties = 9;
+  //bool isTableDataPortEnabled = 11; // obsolete
+  //bool isTailerPortEnabled = 12; // obsolete
+  DataImportServiceEndpointConfigMessage endpointConfig = 14;
+  google.protobuf.StringValue group = 15;
+  MyClaimsMessage claims = 16;
+  string storageName = 17;
+}
+
+// ========== DIS Destinations =================================================
+/* Request for DataImportServiceDestinationConfigs */
+message DataImportServiceDestinationConfigsRequest {
+  TableIdentifierMessage tableIdentifier = 1;
+}
+/* Request for all DataImportServiceDestinationConfigs */
+message AllDataImportServiceDestinationConfigsRequest {
+}
+/* Response to request for DataImportServiceDestinationConfigs */
+message DataImportServiceDestinationConfigResponse {
+  DataImportServiceEndpointConfigMessage endpointConfig = 1;
+}
+
+// ========== LAS Configs ======================================================
+/* Request for LogAggregatorConfig */
+message LogAggregatorConfigRequest {
+  string name = 1;
+}
+/* Request for all LogAggregatorConfigs */
+message AllLogAggregatorConfigRequest {
+}
+/* Response to request for LogAggregatorConfig */
+message LogAggregatorConfigResponse {
+  LogAggregatorConfigMessage configMessage = 1;
+}
+/* Message conveying a LogAggregatorConfig */
+message LogAggregatorConfigMessage {
+  string name = 1;
+  google.protobuf.StringValue description = 2;
+  int32 port = 3; // obsolete
+  FilterMessage filter = 4;
+  map<string, string> properties = 5;
+  LogAggregatorEndpointConfigMessage endpointConfig = 6;
+}
+
+// ========== LAS Destinations =================================================
+/* Request for LogAggregatorEndpointConfig */
+message LogAggregatorDestinationConfigRequest {
+  TableIdentifierMessage tableIdentifier = 1;
+}
+/* Response to request for LogAggregatorEndpointConfig */
+message LogAggregatorDestinationConfigResponse {
+  LogAggregatorEndpointConfigMessage endpointConfig = 1;
+}
+
+// ========== TableDataService =================================================
+/* Request for a TableDataService */
+message TableDataServiceRequest {
+  string name = 1;
+}
+/* Response to request for a TableDataService */
+message TableDataServiceResponse {
+  TableDataServiceMessage tds = 1;
+}
+
+// ========== TableDataService Config ==========================================
+/* Request for a TableDataServiceConfig */
+message TableDataServiceConfigRequest {
+  string name = 1;
+}
+/* Request for all TableDataServiceConfigs */
+message AllTableDataServiceConfigRequest {
+}
+/* Response to request for TableDataServiceConfig */
+message TableDataServiceConfigResponse {
+  TableDataServiceConfigMessage tdsConfig = 1;
+  ClaimsMessage collectedClaims = 2;
+}
+/* Message conveying a DataRoutingService.TableDataServiceConfig */
+message TableDataServiceConfigMessage {
+  string name = 1;
+  FilterMessage filter = 2;
+  google.protobuf.StringValue storageRoot = 3;
+  google.protobuf.StringValue description = 4;
+  repeated string tags = 5;
+  google.protobuf.Int32Value port = 6; // obsolete
+  // property provider
+  map<string, string> properties = 7;
+  EndpointConfigMessage endpointConfig = 8;
+  repeated TableDataServiceConfigMessage delegate = 9;
+  google.protobuf.StringValue storageName = 10;
+}
+/* Response to request for multiple(all) DataRoutingService.TableDataServiceConfigs */
+message TableDataServiceConfigsResponse {
+  ClaimsMessage collectedClaims = 1;
+  repeated TableDataServiceConfigMessage tdsConfig = 2;
+}
+
+// ========== DataRoutingService metadata ======================================
+message CollectedClaimsRequest {
+  // empty
+}
+message CollectedClaimsResponse {
+  ClaimsMessage collectedClaims = 1;
+}
+
+// ========== Component Types ==================================================
+/* Message conveying a DataRoutingService.Filter */
+message FilterMessage {
+  oneof type {
+    // serialized filter
+    string yml = 1;
+    // fully formed claims filter
+    ClaimsFilterMessage claimsFilter = 2;
+    // fully formed ifNotClaimed filter
+    IfNotClaimedFilterMessage ifNotClaimedFilter = 3;
+    // List filter
+    ListFilterMessage listFilter = 4;
+  }
+}
+/* A list of filters. Keep the proto parsing going for another level */
+message ListFilterMessage {
+  repeated FilterMessage filter = 1;
+}
+/* A filter representing the claimed-by-claimant filter, against the global list of claims */
+message ClaimsFilterMessage {
+  string claimant = 1;
+  ClaimsMessage claims = 2;
+}
+/* A filter representing if-not-claimed then my-filter filter, using the global list of claims */
+message IfNotClaimedFilterMessage {
+  ClaimsMessage claims = 1;
+  FilterMessage filter = 2;
+}
+
+/* The specific claims made by a single DIS */
+message MyClaimsMessage {
+  repeated string namespaces = 1;
+  message TableId {
+    string namespace = 1;
+    string tableName = 2;
+  }
+  repeated TableId tables = 2;
+}
+
+/* "Global" collection of all claims made in the configuration */
+message ClaimsMessage {
+  // namespace to claimant
+  map<string, string> namespaceClaims = 1;
+  // namespace to (table to claimant)
+  map<string, TableClaimMessage> tableClaims = 2;
+}
+/* Component of ClaimsMessage, a claimed table associated with a namespace */
+message TableClaimMessage {
+  // table to claimant
+  map<string, string> tableClaims = 1;
+}
+
+
+/* Message conveying a DataRoutingService.TableDataService */
+message TableDataServiceMessage {
+  // TODO
+}
+
+/* Message conveying JettyServerHelper.Parameters data */
+message WebserverParametersMessage {
+  string mainClassName = 1;
+  bool enabled = 2;
+  bool authenticationRequired = 3;
+  bool sslRequired = 4;
+  int32 port = 5;
+}
+
+/* Message requesting the current DataRoutingService file (not additional DISes) */
+message DataRoutingFileRequest {
+}
+/* Message requesting the current DataRoutingService configuration - main file plus additional DISes */
+message DataRoutingConfigurationRequest {
+}
+/* Message conveying the current DataRoutingService file and additional DISes */
+message DataRoutingConfigurationResponse {
+  string yml = 1; // the main routing file, as a yaml string
+  map<string, DataImportServiceConfigMessage> disConfigs = 2; // additional DIS configurations, by name
+}
+
+/* Message conveying a TableIdentifier */
+message TableIdentifierMessage {
+  google.protobuf.StringValue namespace = 1;
+  google.protobuf.StringValue tableName = 2;
+  io.deephaven.proto.common.NamespaceSetEnum namespaceSet = 3;
+}
+
+/* Request to update the main data routing file with the ymldata content */
+message DataRoutingFileUpdateRequest {
+  bytes ymldata = 1;
+  string user = 2;
+  string code = 3;
+  string comment = 4;
+}
+
+/* Response to DataRoutingFileUpdateRequest */
+message DataRoutingFileUpdateResponse {
+}
+
+/*
+  Request to update one or more items comprising the data routing configuration.
+  This is a composite message that may be used to add DISes, update or remove DISes, replace all DISes,
+  and optionally update the main routing file at the same time for an atomic change.
+ */
+message DataRoutingUpdateDataImportServiceConfigsMessage {
+  repeated DataImportServiceConfigMessage configToAdd = 1;
+  repeated DataImportServiceConfigMessage configToUpdate = 2;
+  repeated string configToRemove = 3;
+  bool removeOthers = 4;
+  bool lenient = 5;
+  string user = 6;
+  string code = 7;
+  string comment = 8;
+  bool ignoreErrors = 9;
+  google.protobuf.StringValue routingYmlString = 10; // the main routing file, as a yaml string
+}
+
+/* Request to begin listening for routing config changes */
+message DataRoutingConfigurationChangeNotificationRequest {
+  int64 clientId = 1;
+}
+
+/*
+  Message indicating that the data routing config has changed.
+  The actual changes must be requested via another channel.
+  This message is also used as a keep-alive heartbeat, indicated by an unchanged wrt value.
+*/
+message DataRoutingConfigurationChangeMessage {
+  int64 clientId = 1;
+  int64 wrt = 2;
+}
