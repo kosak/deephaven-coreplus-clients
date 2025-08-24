@@ -29,9 +29,10 @@ public class Subscription : IDisposable {
   /// snapshot of the state of all PQs in the controller server, as known by the
   /// client at this time.
   ///
-  /// Note that the map stored behaves as an immutable map. Multiple versions
+  /// Note that the stored map behaves as an immutable map. Multiple versions
   /// of this map share common subtrees. The client can keep a reference to this
   /// map as long as it would like.
+
   /// </summary>
   /// <param name="version">an out parameter where the current version number will be stored</param>
   /// <param name="map">an output parameter where the current map of PQ state will be stored</param>
