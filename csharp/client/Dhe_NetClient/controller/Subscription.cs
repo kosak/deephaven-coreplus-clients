@@ -67,7 +67,8 @@ public class Subscription : IDisposable {
   /// </summary>
   /// <param name="version">a version reference; next will return true only if a
   /// new version more recent than this argument is available</param>
-  /// <returns>false it this Subscription is closed and shut down already,
+  /// <returns>false if this Subscription is closed and shut down already,
+
   /// in which case the output parameter pointer values are set to default values;
   /// true otherwise. See the documentation for `IsClosed` for
   /// an explanation of how the subscription can become closed</returns>
