@@ -45,7 +45,7 @@ public sealed class CommonContextForTests : IDisposable {
       throw new Exception($"The following environment variables were not found: {string.Join(", ", missing)}.\n" +
         "Please set them in your environment.\n" +
         "Sample values:\n" +
-        "  DH_HOST=https://myserver.myorganiztion:8123/iris/connection.json\n" +
+        "  DH_HOST=https://myserver.myorganization:8123/iris/connection.json\n" +
         "  DH_TEST_USER=myname\n" +
         "  DH_TEST_PASSWORD=hunter2\n" +
         "If using the Visual Studio test runner you can edit the .runsettings file in the project directory.\n" +

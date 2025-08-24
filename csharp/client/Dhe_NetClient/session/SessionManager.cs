@@ -2,7 +2,9 @@
 // Copyright (c) 2016-2025 Deephaven Data Labs and Patent Pending
 //
 using System.Text.Json;
+using System.Threading.Channels;
 using Deephaven.Dh_NetClient;
+using Grpc.Core;
 using Io.Deephaven.Proto.Controller;
 
 namespace Deephaven.Dhe_NetClient;
@@ -88,6 +90,9 @@ public class SessionManager : IDisposable {
       TlsRootCerts = rootCerts
     };
     if (overrideAuthority != null) {
+      // TODO(kosak): not supported in the library directly. Probably need to
+      // follow the advice of https://github.com/grpc/grpc-dotnet/issues/1362
+      // which may require refactoring the code in the core client.
       // clientOptions.AddStringOption(GRPC_SSL_TARGET_NAME_OVERRIDE_ARG, override_authority);
     }
 
@@ -197,8 +202,7 @@ public class SessionManager : IDisposable {
     var pqSerial = infoMsg.Config.Serial;
 
     var pqStrForErr = $"pq_name='{infoMsg.Config.Name}', pq_serial={pqSerial}";
-    var pos = url.IndexOf(':');
-    const int targetOffsetAfterColon = 3;  // "://"
+
     if (url.IsEmpty()) {
       if (infoMsg.State.EngineVersion.IsEmpty()) {
         throw new Exception($"{pqStrForErr} is not a Community engine");
@@ -206,16 +210,18 @@ public class SessionManager : IDisposable {
       throw new Exception($"{pqStrForErr} has no gRPC connectivity available");
     }
 
-    // pos < 1 means 0 or not found
-    if (pos < 1 || pos + targetOffsetAfterColon >= url.Length) {
-      throw new Exception($"{pqStrForErr} has invalid url='{url}'");
+    Uri uri;
+    try {
+      uri = new Uri(url);
+    } catch (Exception e) {
+      throw new Exception($"{pqStrForErr} has invalid url='{url}'", e);
     }
 
-    var urlSchema = url.Substring(0, pos);
-    var urlTarget = url.Substring(pos + targetOffsetAfterColon);
+    var urlScheme = uri.Scheme;
+    var urlTarget = uri.Host + uri.PathAndQuery;
     var envoyPrefix = infoMsg.State.ConnectionDetails.EnvoyPrefix;
     var scriptLanguage = infoMsg.Config.ScriptLanguage;
-    var useTls = (urlSchema == "https");
+    var useTls = urlScheme == Uri.UriSchemeHttps;
     return ConnectToDndWorker(
       pqSerial,
       urlTarget,
