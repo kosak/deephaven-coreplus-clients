@@ -1,0 +1,64 @@
+/*
+ * Copyright (c) 2016-2019 Deephaven Data Labs and Patent Pending
+ */
+
+syntax = "proto3";
+
+package io.deephaven.proto.routing.grpc;
+
+import "deephaven_enterprise/proto/common.proto";
+import "deephaven_enterprise/proto/routing.proto";
+import "google/protobuf/wrappers.proto";
+
+option java_multiple_files = true;
+option optimize_for = SPEED;
+
+/*
+ * Remoting for the DataRoutingService interface.
+ */
+service RoutingApi {
+  // ========== DataRoutingService metadata ====================================
+  rpc about(io.deephaven.proto.common.AboutRequest) returns (io.deephaven.proto.common.AboutReply) {}
+  /* this is just a workaround pending more TDS serialization work */
+  rpc getFile(DataRoutingFileRequest) returns (google.protobuf.StringValue) {}
+  rpc getFullConfiguration(DataRoutingConfigurationRequest) returns (DataRoutingConfigurationResponse) {}
+  rpc getCollectedClaims(CollectedClaimsRequest) returns (CollectedClaimsResponse) {}
+
+  // ========== DIS Configs ====================================================
+  /* Implements DataImportServiceConfig getDataImportServiceConfig(@NotNull String name); */
+  rpc getDataImportServiceConfigs(DataImportServiceConfigsRequest) returns (DataImportServiceConfigsResponse) {}
+
+  // ========== DIS Destinations ===============================================
+  /* Implements Collection<? extends DataImportServiceEndpointConfig> getDataImportServiceDestinations(@NotNull TableIdentifier tableIdentifier); */
+  rpc getDataImportServiceDestinationConfigs(DataImportServiceDestinationConfigsRequest) returns (stream DataImportServiceDestinationConfigResponse) {}
+  /* Implements Collection<? extends DataImportServiceEndpointConfig> getAllDataImportServiceDestinationConfigs(); */
+  rpc getAllDataImportServiceDestinationConfigs(AllDataImportServiceDestinationConfigsRequest) returns (stream DataImportServiceDestinationConfigResponse) {}
+
+  // ========== LAS Configs ====================================================
+  /* Implements Config getLogAggregatorConfig(@NotNull String configName); */
+  rpc getLogAggregatorConfig(LogAggregatorConfigRequest) returns (LogAggregatorConfigResponse) {}
+  /* Implements Collection<? extends LogAggregatorConfig> getAllLogAggregatorServiceConfigs(); */
+  rpc getAllLogAggregatorServiceConfigs(AllLogAggregatorConfigRequest) returns (stream LogAggregatorConfigResponse) {}
+
+  // ========== LAS Destinations ===============================================
+  /* Implements LogAggregatorEndpoint getLogAggregatorDestinationConfig(@NotNull TableIdentifier tableIdentifier); */
+  rpc getLogAggregatorDestinationConfig(LogAggregatorDestinationConfigRequest) returns (LogAggregatorDestinationConfigResponse) {}
+
+  // ========== TableDataService ===============================================
+  /* Implements TableDataService getTableDataService(@NotNull String tdsName) throws IOException; */
+//  rpc getTableDataService(TableDataServiceRequest) returns (TableDataServiceResponse) {}
+
+  // ========== TableDataService Configs =======================================
+  /* Implements TableDataServiceConfig getTableDataServiceConfig(@NotNull String name); */
+  rpc getTableDataServiceConfig(TableDataServiceConfigRequest) returns (TableDataServiceConfigResponse) {}
+  /* Implements Collection<? extends TableDataServiceConfig> getTableDataServiceConfigs(); */
+  rpc getTableDataServiceConfigs(AllTableDataServiceConfigRequest) returns (TableDataServiceConfigsResponse) {}
+
+  // ========== TableDataService Configs =======================================
+  /* attempt to update the contents of the data routing file */
+  rpc updateFile(DataRoutingFileUpdateRequest) returns (DataRoutingFileUpdateResponse) {}
+  rpc updateDises(DataRoutingUpdateDataImportServiceConfigsMessage) returns (DataRoutingFileUpdateResponse) {}
+
+  // ========== change notification =======================================
+  rpc subscribeToDataRoutingChangeNotifications(DataRoutingConfigurationChangeNotificationRequest) returns (stream DataRoutingConfigurationChangeMessage) {}
+}

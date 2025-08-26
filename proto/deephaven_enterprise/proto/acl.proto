@@ -1,0 +1,39 @@
+/*
+ * Copyright (c) 2016-2022 Deephaven Data Labs and Patent Pending
+ */
+
+syntax = "proto3";
+
+package io.deephaven.proto.controller;
+
+import "deephaven_enterprise/proto/auth.proto";
+
+option java_multiple_files = true;
+option optimize_for = SPEED;
+
+message UnaryUserRequest {
+  bytes cookie = 1;
+  io.deephaven.proto.auth.UserContext user = 2;
+}
+
+message UnaryGroupRequest {
+  bytes cookie = 1;
+  string group = 2;
+}
+
+message BooleanResponse {
+  bool isTrue = 1;
+}
+
+message UserOrGroupList {
+  bytes cookie = 1;
+  repeated string usersOrGroups = 2;
+}
+
+message GetAllUsersRequest{
+  bytes cookie = 1;
+}
+
+message GetAllGroupsRequest{
+  bytes cookie = 1;
+}

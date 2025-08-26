@@ -1,0 +1,283 @@
+/*
+ * Copyright (c) 2016-2022 Deephaven Data Labs and Patent Pending
+ */
+
+syntax = "proto3";
+
+package io.deephaven.proto.controller;
+
+import "deephaven_enterprise/proto/auth.proto";
+import "deephaven_enterprise/proto/controller_common.proto";
+import "deephaven_enterprise/proto/persistent_query.proto";
+
+option java_multiple_files = true;
+option optimize_for = SPEED;
+
+// Controller API messages
+
+message AuthenticationRequest {
+  io.deephaven.proto.auth.Token token = 1;
+  io.deephaven.proto.auth.ClientId clientId = 2;
+  bool getConfiguration = 3;
+}
+
+message AuthenticationResponse {
+  bool authenticated = 1;
+  bytes cookie = 2;
+  optional ControllerConfigurationMessage config = 3;
+}
+
+message AddQueryRequest {
+  bytes cookie = 1;
+  PersistentQueryConfigMessage config = 2;
+}
+
+message AddQueryResponse {
+  int64 querySerial = 1;
+}
+
+message RemoveQueryRequest {
+  bytes cookie = 1;
+  int64 serial = 2;
+}
+
+message RemoveQueryResponse {
+}
+
+message ModifyQueryRequest {
+  bytes cookie = 1;
+  PersistentQueryConfigMessage config = 2;
+  bool doRestart = 3;
+}
+
+message ModifyQueryResponse {
+
+}
+
+message RestartQueryRequest {
+  bytes cookie = 1;
+  repeated int64 serials = 2;
+}
+
+message RestartQueryResponse {
+  repeated int64 successSerials = 1;
+  map<int64, string> errorSerials = 2;
+}
+
+message StopQueryRequest {
+  bytes cookie = 1;
+  repeated int64 serials = 2;
+}
+
+message StopQueryResponse {
+  repeated int64 successSerials = 1;
+  map<int64, string> errorSerials = 2;
+}
+
+message DetermineDispatcherRequest {
+  bytes cookie = 1;
+  string serverGroupName = 2;
+  int32 heapSizeMb = 3;
+  string workerKind = 4;
+}
+
+enum ServerTypeEnum {
+  STE_UNSPECIFIED = 0;
+  STE_DISPATCHER = 1;
+  STE_GROUP = 2;
+}
+
+message DetermineDispatcherResponse {
+  PQDBServerConfigMessage serverConfig = 1;
+}
+
+message PQDBServerConfigMessage {
+  string name = 1;
+  string host = 2;
+  int32 port = 3;
+  optional string classPushListResourceName = 4;
+  string serverClass = 5;
+  double maxHeapSizeGb = 6;
+  ServerTypeEnum serverType = 7;
+  repeated string consoleGroups = 8;
+  optional string serverInfo = 9;
+}
+
+message GetConfigurationRequest {
+  bytes cookie = 1;
+}
+
+message GetConfigurationResponse {
+  ControllerConfigurationMessage config = 1;
+}
+
+message ControllerConfigurationMessage {
+  int32 maxHeapSizeGb = 1;
+  double minDataBufferPoolRatio = 2;
+  double maxDataBufferPoolRation = 3;
+  repeated ConsoleConfigurationTypeMessage configurationTypes = 4;
+  repeated ControllerTempQueueDetailsMessage temporaryQueueDetails = 5;
+  string defaultTempQueueName = 6;
+  repeated PQDBServerConfigMessage dbServers = 7;
+  repeated string defaultSchedulingDetails = 8;
+  int32 scheduleLookForwardDays = 9;
+  bytes publicKey = 10;
+  string algorithm = 11;
+  repeated NamedStringList consoleServerGroups = 12;
+  repeated string jvmProfileNames = 13;
+  string defaultJvmProfileName = 14;
+  string dataRoutingImplName = 15;
+  repeated RoutingConfigMessage tdsConfigs = 16;
+  repeated RoutingConfigMessage disConfigs = 17;
+  repeated RoutingConfigMessage lasConfigs = 18;
+  map<string, InWorkerServiceTypeMessage> inWorkerServiceDetails = 19;
+}
+
+enum RoutingServiceTypeEnum {
+  RSTE_UNSPECIFIED = 0;
+  RSTE_NONE = 1;
+  RSTE_DIS = 2;
+  RSTE_LAS = 3;
+  RSTE_TDS = 4;
+}
+
+message InWorkerServiceTypeMessage {
+  bool hasScript = 1;
+  RoutingServiceTypeEnum routingServiceType = 2;
+  string routingServiceTag = 3;
+  repeated string routingServiceExcludeTags = 4;
+  repeated string configContextValues = 5;
+  repeated string dbServerClasses = 6;
+  repeated string allowedGroups = 7;
+  string scriptUpdateClass = 8;
+  string scriptSetupClass = 9;
+  string customFieldName = 10;
+  repeated string customFieldValues = 11;
+  bool customFieldEditable = 12;
+}
+
+message RoutingConfigMessage {
+  string name = 1;
+  repeated string tags = 2;
+  string description = 3;
+}
+
+message ControllerTempQueueDetailsMessage {
+  string name = 1;
+  int32 maxConcurrentQueries = 2;
+  int32 maxHeapMb = 3;
+}
+
+message ConsoleConfigurationTypeMessage {
+  string name = 1;
+  string displayName = 2;
+  bool displayable = 3;
+  map<string, string> properties = 4;
+  bool hasScript = 5;
+  repeated string serverClasses = 6;
+  repeated string allowedGroups = 7;
+  repeated ExtraColumnMessage extraColumns = 8;
+  optional string typeSpecificWireConfigJSON = 9;
+
+  string configCheckerClass = 10;
+  string configPanelFactoryClass = 11;
+  string customActionProviderClass = 12;
+  string setupQueryClass = 13;
+  string configClass = 14;
+  string shutdownProcedureClass = 15;
+  string extraJvmArgsClass = 16;
+  string configProcessorClass = 17;
+  string extraColumnGetterClass = 18;
+  repeated string popupProviderClass = 19;
+  string configTypeDetailsClass = 20;
+  string communityInitializerClass = 21;
+  bool hasScriptLanguage = 22;
+  string communityRequestProcessorClass = 23;
+}
+
+message ExtraColumnMessage {
+  string name = 1;
+  string rendererName = 2;
+}
+
+enum ScriptCommandEnum {
+  SCE_UNSPECIFIED = 0;
+  SCE_GET_AS_SELF = 1;
+  SCE_GET_AS_OTHER = 2;
+  SCE_GET_FOR_QUERY = 3;
+}
+
+message GetScriptPathsRequest {
+  bytes cookie = 1;
+  ScriptCommandEnum command = 2;
+  optional int64 querySerial = 3;
+  optional string effectiveUser = 4;
+  optional string scriptLoaderStateJSON = 5;
+  bool useRelativePath = 6;
+}
+
+message GetScriptPathsResponse {
+  repeated string results = 1;
+}
+
+message GetScriptRequest {
+  bytes cookie = 1;
+  ScriptCommandEnum command = 2;
+  optional int64 querySerial = 3;
+  optional string effectiveUser = 4;
+  optional string scriptLoaderStateJSON = 5;
+  string scriptPath = 6;
+  bool useRelativePath = 7;
+}
+
+message GetScriptResponse {
+  optional string scriptBody = 1;
+}
+
+message StatusUpdateRequest {
+  bytes cookie = 1;
+  int64 querySerial = 2;
+  optional PersistentQueryStatusEnum status = 3;
+
+  bool hasExportedObjects = 4;
+  repeated ExportedObjectInfoMessage exportedObjects = 5;
+
+  bool hasTableGroups = 6;
+  repeated NamedStringList tableGroups = 7;
+}
+
+message StatusUpdateResponse {
+
+}
+
+message ReloadConfigRequest {
+  bytes cookie = 1;
+}
+
+message ReloadConfigResponse {
+
+}
+
+enum SubscriptionEvent {
+  SE_UNSPECIFIED = 0;
+  SE_PUT = 1;
+  SE_REMOVE = 2;
+  SE_CONFIG_UPDATE = 3;
+  SE_BATCH_END = 4;
+}
+
+message SubscribeRequest {
+  bytes cookie = 1;
+}
+
+message SubscribeResponse {
+  SubscriptionEvent event = 1;
+  oneof data {
+    // Only populated for SE_REMOVE
+    int64 querySerial = 3;
+    // Only populated for SE_PUT or SE_BATCH_END
+    PersistentQueryInfoMessage queryInfo = 4;
+    // Only populated for SE_CONFIG_UPDATE
+    ControllerConfigurationMessage config = 5;
+  }
+}

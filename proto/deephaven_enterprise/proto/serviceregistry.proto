@@ -1,0 +1,79 @@
+/*
+ * Copyright (c) 2016-2019 Deephaven Data Labs and Patent Pending
+ */
+
+syntax = "proto3";
+
+package io.deephaven.proto.serviceregistry;
+
+import "deephaven_enterprise/proto/common.proto";
+import "google/protobuf/wrappers.proto";
+
+option java_multiple_files = true;
+option optimize_for = SPEED;
+
+/*
+ * Support messages for serviceregistry_service implementation of ServiceRegistry
+ */
+
+message RoutingEndpointConfigMessage{
+  string name = 1;
+  string endpointId = 2;
+  string host = 3;
+  int32 port = 4;
+  string processId = 5;
+}
+
+message RegisterRoutingEndpointConfigRequest{
+  google.protobuf.Int64Value leaseId = 1;
+  RoutingEndpointConfigMessage endpointConfig = 2;
+}
+
+message RegisterRoutingEndpointConfigResponse{
+  int64 leaseId = 1;
+  string name = 2;
+  int32 leaseTtl = 3;
+  int32 leaseRenewSeconds = 4;
+  int32 leaseRenewRetryDelay = 5;
+}
+
+message RevokeLeaseRequest{
+  string name = 1;
+  int64 leaseId = 2;
+}
+
+message RevokeLeaseResponse{
+}
+
+message RoutingEndpointConfigRequest{
+  string name = 1;
+  string endpointId = 2;
+}
+
+message RoutingEndpointConfigResponse{
+  RoutingEndpointConfigMessage endpointConfig = 1;
+}
+
+message RenewLeaseRequest{
+  string name = 1;
+  int64 leaseId = 2;
+}
+
+message RenewLeaseResponse{
+  bool success = 1;
+}
+
+message GetConfigsRequest{
+  string name = 1;
+}
+
+message GetConfigsResponse{
+  repeated RoutingEndpointConfigMessage endpointConfigs = 1;
+}
+
+message GetAllConfigsRequest{
+}
+
+message GetAllConfigsResponse{
+  repeated RoutingEndpointConfigMessage endpointConfigs = 1;
+}

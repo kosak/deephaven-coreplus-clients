@@ -1,0 +1,51 @@
+/*
+ * Copyright (c) 2016-2019 Deephaven Data Labs and Patent Pending
+ */
+
+syntax = "proto3";
+
+package io.deephaven.proto.schema.grpc;
+
+import "deephaven_enterprise/proto/common.proto";
+import "deephaven_enterprise/proto/schema.proto";
+import "google/protobuf/wrappers.proto";
+
+option java_multiple_files = true;
+option optimize_for = SPEED;
+
+/*
+ * Remoting for the Schema Service.
+*/
+service SchemaApi {
+  // return a string with information about the server side context
+  rpc about(io.deephaven.proto.common.AboutRequest) returns (io.deephaven.proto.common.AboutReply) {}
+
+  // Authenticate using the AuthToken in the AuthRequest.
+  // This can be used to remove authentication.
+  // The client will hold on to this authenticated context for subsequent calls.
+  rpc authenticate(io.deephaven.proto.common.AuthRequest) returns (io.deephaven.proto.common.AuthReply) {}
+
+  //------------------- TODO (mostly) ----------------------/
+
+  //rpc getLatestSchema(SchemaRequest) returns (SchemaReply) {}
+
+  // TODO: there's a choice to make - mimic the SchemaService API, or provide building blocks
+  // e.g. putSchema with SchemaRequest that differentiates between add and update
+  rpc putSchema(SchemaRequest) returns (SchemaReply) {}
+  rpc getSchema(SchemaRequest) returns (SchemaReply) {}
+  rpc getSchemas(SchemasRequest) returns (stream SchemaReply) {}
+  //rpc listSchemas(SchemasRequest) returns (stream StringReply) {}
+  rpc containsSchema(SchemaRequest) returns (google.protobuf.BoolValue) {}
+
+  rpc getNamespaceSet (NamespaceRequest) returns (NamespaceSetReply) {}
+  //    rpc NamespaceSet getNamespaceSet(@NotNull String namespace) throws IllegalArgumentException;
+  rpc listNamespaces (NamespaceSetRequest) returns (stream google.protobuf.StringValue) {}
+
+  rpc listTableNames (NamespaceRequest) returns (stream google.protobuf.StringValue) {}
+
+  rpc listAllTables (ListAllTablesRequest) returns (stream TableNameReply) {}
+
+  rpc containsNamespace (NamespaceRequest) returns (google.protobuf.BoolValue) {}
+  rpc createNamespace (NamespaceRequest) returns (google.protobuf.BoolValue) {}
+  rpc removeNamespace (NamespaceRequest) returns (google.protobuf.BoolValue) {}
+}
