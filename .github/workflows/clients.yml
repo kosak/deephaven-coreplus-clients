@@ -44,7 +44,7 @@ jobs:
           dotnet build -c Release
 
       - name: setup PATH to be able to run Visual Studio tools like signtool.exe
-        uses: ilammy/msvc-dev-cmd@v1
+        uses: ilammy/msvc-dev-cmd@0b201ec74fa43914dc39ae48a89fd1d8cb592756
 
       - name: Decode PFX and Import Certificate
         shell: powershell
