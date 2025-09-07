@@ -34,7 +34,7 @@ internal class SubscriptionContext : IDisposable {
     public readonly object SyncRoot = new();
     public long Version = 0;
     public ControllerConfigurationMessage? PqConfig = null;
-    public SharableDict<PersistentQueryInfoMessage> PqMap = new();
+    public SharableDict<PersistentQueryInfoMessage> PqMap = SharableDict<PersistentQueryInfoMessage>.Empty;
     public bool FirstBatchDelivered = false;
     public bool Cancelled = false;
     public Task? ProcessingTask;
