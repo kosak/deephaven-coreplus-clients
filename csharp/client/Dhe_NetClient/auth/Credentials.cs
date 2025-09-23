@@ -1,8 +1,6 @@
 ﻿//
 // Copyright (c) 2016-2025 Deephaven Data Labs and Patent Pending
 //
-
-using System.Buffers.Text;
 using System.Security.Cryptography;
 
 namespace Deephaven.Dhe_NetClient;
