@@ -10,20 +10,59 @@ public class SessionManager : IDisposable {
   private const string DefaultOverrideAuthority = "authserver";
   private const string DispatcherServiceName = "RemoteQueryProcessor";
 
-  public static SessionManager FromUrl(string descriptiveName, Credentials credentials,
-    string url, bool validateCertificate = true) {
-    var info = ConfigurationInfo.OfUrl(url, validateCertificate);
-    return FromConfigInfo(descriptiveName, credentials, info);
+  /// <summary>
+  /// Creates a SessionManager from a URI (specified as a string)
+  /// </summary>
+  /// <param name="descriptiveName">A descriptive name of this SessionManager (for debugging/logging)</param>
+  /// <param name="credentials">The credentials to authenticate to the server</param>
+  /// <param name="url">The URL of the server (e.g. https://myserver.mycorp:8123/iris/connection.json)</param>
+  /// <param name="validateCertificate">Whether you want to validate the servers SSL certificate</param>
+  /// <param name="invokeBrowser">If the credentials type is SAML, a callback we will invoke containing a URI
+  /// which needs to be passed to a browser for the user to authenticate. This callback must invoke the
+  /// browser in the background and not block.</param>
+  /// <returns>The new SessionManager</returns>
+  public static SessionManager FromUri(string descriptiveName, Credentials credentials,
+    string url, bool validateCertificate = true, Action<Uri>? invokeBrowser = null) {
+    var uri = new Uri(url);
+    return FromUri(descriptiveName, credentials, uri, validateCertificate, invokeBrowser);
   }
 
+  /// <summary>
+  /// Creates a SessionManager from a uri.
+  /// </summary>
+  /// <param name="descriptiveName">A descriptive name of this SessionManager (for debugging/logging)</param>
+  /// <param name="credentials">The credentials to authenticate to the server</param>
+  /// <param name="uri">The URI of the server (e.g. https://myserver.mycorp:8123/iris/connection.json)</param>
+  /// <param name="validateCertificate">Whether you want to validate the servers SSL certificate</param>
+  /// <param name="invokeBrowser">If the credentials type is SAML, a callback we will invoke containing a URI
+  /// which needs to be passed to a browser for the user to authenticate. This callback must invoke the
+  /// browser in the background and not block.</param>
+  /// <returns>The new SessionManager</returns>
+  public static SessionManager FromUri(string descriptiveName, Credentials credentials,
+    Uri uri, bool validateCertificate = true, Action<Uri>? invokeBrowser = null) {
+    var info = ConfigurationInfo.OfUri(uri, validateCertificate);
+    return FromConfigInfo(descriptiveName, credentials, info, invokeBrowser);
+  }
+
+  /// <summary>
+  /// Creates a SessionManager from a JSON file.
+  /// </summary>
+  /// <param name="descriptiveName">A descriptive name of this SessionManager (for debugging/logging)</param>
+  /// <param name="credentials">The credentials to authenticate to the server</param>
+  /// <param name="json">The JSON file as returned by a Deephaven server when fetching
+  /// e.g. https://myserver.mycorp:8123/iris/connection.json</param>
+  /// <param name="invokeBrowser">If the credentials type is SAML, a callback we will invoke containing a URI
+  /// which needs to be passed to a browser for the user to authenticate. This callback must invoke the
+  /// browser in the background and not block.</param>
+  /// <returns>The new SessionManager</returns>
   public static SessionManager FromJson(string descriptiveName, Credentials credentials,
-    string json) {
+    string json, Action<Uri>? invokeBrowser = null) {
     var info = ConfigurationInfo.OfJson(json);
-    return FromConfigInfo(descriptiveName, credentials, info);
+    return FromConfigInfo(descriptiveName, credentials, info, invokeBrowser);
   }
 
   public static SessionManager FromConfigInfo(string descriptiveName, Credentials credentials,
-    ConfigurationInfo info) {
+    ConfigurationInfo info, Action<Uri>? invokeBrowser) {
     string? rootCerts = null;
     if (info.TruststoreUrl != null) {
       // TODO(kosak): true, false, or pass through some parameter?
@@ -40,6 +79,14 @@ public class SessionManager : IDisposable {
     ArgumentNullException.ThrowIfNull(authAuthority, nameof(authAuthority));
     ArgumentNullException.ThrowIfNull(controllerAuthority, nameof(controllerAuthority));
     ArgumentNullException.ThrowIfNull(rootCerts, nameof(rootCerts));
+
+    if (credentials is Credentials.SamlCredentials saml) {
+      if (invokeBrowser == null) {
+        throw new Exception("Credentials is of type SAML but no browser callback provided");
+      }
+      var uri = info.MakeSamlAuthUri(saml.Nonce);
+      invokeBrowser(uri);
+    }
 
     return Create(
       descriptiveName,
