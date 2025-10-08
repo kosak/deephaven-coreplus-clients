@@ -1,9 +1,6 @@
 ﻿//
 // Copyright (c) 2016-2025 Deephaven Data Labs and Patent Pending
 //
-
-using System.Diagnostics.CodeAnalysis;
-using System.Text.Json;
 using Deephaven.Dh_NetClient;
 using Io.Deephaven.Proto.Controller;
 
