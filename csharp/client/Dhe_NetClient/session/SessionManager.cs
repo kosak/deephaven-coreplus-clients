@@ -123,10 +123,7 @@ public class SessionManager : IDisposable {
       TlsRootCerts = rootCerts
     };
     if (overrideAuthority != null) {
-      // TODO(kosak): not supported in the library directly. Probably need to
-      // follow the advice of https://github.com/grpc/grpc-dotnet/issues/1362
-      // which may require refactoring the code in the core client.
-      // clientOptions.AddStringOption(GRPC_SSL_TARGET_NAME_OVERRIDE_ARG, override_authority);
+      clientOptions.ZamboniTime = true;
     }
 
     return (target, clientOptions);
