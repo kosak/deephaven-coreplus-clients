@@ -230,19 +230,23 @@ public class ControllerClient : IDisposable {
       status == PersistentQueryStatusEnum.PqsCompleted;
   }
 
-  private void Heartbeat(object? unused) {
+  public void Ping() {
     PingRequest req;
     lock (_synced.SyncRoot) {
       if (_synced.Cancelled) {
-        return;
+        throw new Exception("ControllerClient is closed");
       }
       req = new PingRequest {
-        Cookie = ByteString.CopyFrom(_synced.AuthCookie)
+        Cookie = GetAuthCookie()
       };
     }
 
+    _ = _controllerApi.ping(req);
+  }
+
+  private void Heartbeat(object? unused) {
     try {
-      _ = _controllerApi.ping(req);
+      Ping();
     } catch (Exception e) {
       Debug.WriteLine($"{_clientId}: Controller heartbeat ignoring exception: {e}");
 
